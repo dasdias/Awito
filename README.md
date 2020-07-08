@@ -1,2 +1,2 @@
 # Awito
-[Github Pages](https://dasdias.github.io/BattleCity/ "Посмотреть страницу")
+[Github Pages](https://dasdias.github.io/Awito/ "Посмотреть страницу")
