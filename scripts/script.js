@@ -1,88 +1,120 @@
 'use strict';
 
-const dataBase = [];
+const dataBase = JSON.parse(localStorage.getItem('awito')) || [];
 
 const modalAdd = document.querySelector('.modal__add'),
-    addAd = document.querySelector('.add__ad'),
-    modalBtnSubmit = document.querySelector('.modal__btn-submit'),
-    modalSubmit = document.querySelector('.modal__submit'),
-    modalItem = document.querySelector('.modal__item'),
-    catalog = document.querySelector('.catalog'),
-    modalBtnWarning = document.querySelector('.modal__btn-warning');
+  addAd = document.querySelector('.add__ad'),
+  modalBtnSubmit = document.querySelector('.modal__btn-submit'),
+  modalSubmit = document.querySelector('.modal__submit'),
+  modalItem = document.querySelector('.modal__item'),
+  catalog = document.querySelector('.catalog'),
+  modalBtnWarning = document.querySelector('.modal__btn-warning'),
+    modalFileInput = document.querySelector('.modal__file-input'),
+    modalFileBtn = document.querySelector('.modal__file-btn'),
+    modalImageAdd = document.querySelector('.modal__image-add');
 
-    
+
+    const textFileBtn = modalFileBtn.textContent;
+    const srcModalImage = modalImageAdd.src;
 // спред оператор ...elementsModalSubmit
-const elementsModalSubmit = [...modalSubmit.elements].filter( elem => elem.tagName !== 'BUTTON' && elem.type !== 'submit');
+const elementsModalSubmit = [...modalSubmit.elements].filter( (elem) => elem.tagName !== 'BUTTON' && elem.type !== 'submit');
 
-const closeModal = function(e) {
-    const target = e.target;
-    if (target.closest('.modal__close') || target === this) {
-        this.classList.add('hide');
-        if (this === modalAdd) {
-            modalSubmit.reset();
+const infoPhoto = {};
+console.log(localStorage.getItem('awito'));
+const saveDB = () => localStorage.setItem('awito', JSON.stringify(dataBase));
+
+const checkForm = () => {
+  const validForm = elementsModalSubmit.every((elem) => elem.value);
+//   console.log(validForm);
+  modalBtnSubmit.disabled = !validForm;
+  modalBtnWarning.style.display = validForm ? 'none' : '';
+};
+
+const closeModal = function (e) {
+  const target = e.target;
+  if (
+    target.closest('.modal__close') ||
+    target.classList.contains('modal') ||
+    e.code === 'Escape' ) {
+    modalAdd.classList.add('hide');
+    modalItem.classList.add('hide');
+    document.removeEventListener('keydown', closeModal);
+    modalSubmit.reset();
+    modalImageAdd.src = srcModalImage;
+    modalFileBtn.textContent = textFileBtn;
+    checkForm();
+  }
+};
+
+const renderCard = () => {
+    catalog.textContent = '';
+    dataBase.forEach((item, i) => {
+        catalog.insertAdjacentHTML('beforeend', `
+        <li class="card" data-id="${i}">
+            <img class="card__image" src="data:image/jpeg;base64,${item.image}" alt="test" />
+            <div class="card__description">
+              <h3 class="card__header">${item.nameItem}</h3>
+              <div class="card__price">${item.costItem} ₽</div>
+            </div>
+          </li>        
+        `);
+    });
+};
+
+modalFileInput.addEventListener('change', (event) => {
+    const target = event.target;
+    const reader = new FileReader();
+    // console.log(target.files);
+    const file = target.files[0];
+
+    infoPhoto.filename = file.name;
+    infoPhoto.size = file.size;
+
+    reader.readAsBinaryString(file);
+
+    reader.addEventListener('load', (event) => {
+        if (infoPhoto.size < 300000) {
+            modalFileBtn.textContent = infoPhoto.filename;
+            infoPhoto.base64 = btoa(event.target.result);
+            modalImageAdd.src = `data:image/jpeg;base64,${infoPhoto.base64}`;
+            // console.log(infoPhoto);
+        } else {
+            modalFileBtn.textContent = 'Размер файла не должен превыщать 200кб';
+            modalFileInput.value = '';
+            checkForm();
         }
-    }
-};
-const closeModalEsc = function(e) {
-    
-    const target = e.code;
-    if (target === 'Escape') {
-        modalAdd.classList.add('hide');
-        modalItem.classList.add('hide');
-        modalSubmit.reset();
-        document.removeEventListener('keydown', closeModalEsc);        
-    }
-   
-};
-modalSubmit.addEventListener('input', () => {
-    const validForm = elementsModalSubmit.every(elem => elem.value);
-    console.log(validForm);
-    modalBtnSubmit.disabled = !validForm;
-    modalBtnWarning.style.display = validForm ? 'none' : '';
+    });
+
 });
 
-modalSubmit.addEventListener('submit', (event) => {
+modalSubmit.addEventListener('input', checkForm);
 
-    event.preventDefault();
-    const itemObj = {};
-    for (const elem of elementsModalSubmit) {
-        itemObj[elem.name] = elem.value;
-    }
-    dataBase.push(itemObj);
-    modalSubmit.reset();
-    // console.log(itemObj);
+modalSubmit.addEventListener('submit', (event) => {
+  event.preventDefault();
+  const itemObj = {};
+  for (const elem of elementsModalSubmit) {
+    itemObj[elem.name] = elem.value;
+  }
+  itemObj.image = infoPhoto.base64;
+  dataBase.push(itemObj);
+  closeModal({ target: modalAdd });
+  saveDB();
+    renderCard();
 });
 
 addAd.addEventListener('click', () => {
-    modalAdd.classList.remove('hide');
-    modalBtnSubmit.disabled = true;
-    document.addEventListener('keydown', closeModalEsc);
+  modalAdd.classList.remove('hide');
+  modalBtnSubmit.disabled = true;
+  document.addEventListener('keydown', closeModal);
 });
-catalog.addEventListener('click', (e)=> {
-    const target = e.target;
-    if (target.closest('.card')) {+
-        modalItem.classList.remove('hide');
-        document.addEventListener('keydown', closeModalEsc);
-    }
+catalog.addEventListener('click', (e) => {
+  const target = e.target;
+  if (target.closest('.card')) {
+    modalItem.classList.remove('hide');
+    document.addEventListener('keydown', closeModal);
+  }
 });
 
 modalAdd.addEventListener('click', closeModal);
 modalItem.addEventListener('click', closeModal);
-
-// modalItem.addEventListener('click', (e)=> {
-//     const target = e.target;
-//     if (target.classList.contains('modal__close') || target === modalItem) {
-//         modalItem.classList.add('hide');
-//     }
-// });
-
-// modalAdd.addEventListener('click', event => {
-//     // console.log(event.target);    
-//     const target = event.target;
-//     if (target.classList.contains('modal__close') || target === modalAdd ) {
-//         modalAdd.classList.add('hide');
-//         modalSubmit.reset();
-//     }
-// });
-
-// document.addEventListener('keydown',  closeModalEsc);
+renderCard();
