@@ -9,18 +9,24 @@ const modalAdd = document.querySelector('.modal__add'),
   modalItem = document.querySelector('.modal__item'),
   catalog = document.querySelector('.catalog'),
   modalBtnWarning = document.querySelector('.modal__btn-warning'),
-    modalFileInput = document.querySelector('.modal__file-input'),
-    modalFileBtn = document.querySelector('.modal__file-btn'),
-    modalImageAdd = document.querySelector('.modal__image-add');
+  modalFileInput = document.querySelector('.modal__file-input'),
+  modalFileBtn = document.querySelector('.modal__file-btn'),
+    // Modal
+  modalImageAdd = document.querySelector('.modal__image-add'),
+  modalHeaderItem = document.querySelector('.modal__header-item'),
+  modalImageItem = document.querySelector('.modal__image-item'),
+  modalStatusItem = document.querySelector('.modal__status-item'),
+  modalDescriptionItem = document.querySelector('.modal__description-item'),
+  modalCostItem = document.querySelector('.modal__cost-item');
 
 
     const textFileBtn = modalFileBtn.textContent;
     const srcModalImage = modalImageAdd.src;
 // спред оператор ...elementsModalSubmit
 const elementsModalSubmit = [...modalSubmit.elements].filter( (elem) => elem.tagName !== 'BUTTON' && elem.type !== 'submit');
-
+// console.log(dataBase);
 const infoPhoto = {};
-console.log(localStorage.getItem('awito'));
+// console.log(localStorage.getItem('awito'));
 const saveDB = () => localStorage.setItem('awito', JSON.stringify(dataBase));
 
 const checkForm = () => {
@@ -46,6 +52,42 @@ const closeModal = function (e) {
   }
 };
 
+const renderModalItem = (e) => {
+  modalItem.textContent = '';
+
+  dataBase.forEach((item, i) => {
+    if (i === +e) {      
+      modalItem.insertAdjacentHTML('beforeend', `   
+        <div class="modal__block">
+          <h2 class="modal__header">Купить</h2>
+          <div class="modal__content">
+            <div>
+              <img class="modal__image modal__image-item" src="data:image/jpeg;base64,${item.image}" alt="test"/>
+            </div>
+            <div class="modal__description">
+              <h3 class="modal__header-item">${item.nameItem}</h3>
+              <p>
+                Состояние:
+                <span class="modal__status-item">${item.status}</span>
+              </p>
+              <p>
+                Описание:
+                <span class="modal__description-item">${item.descriptionItem}</span>
+              </p>
+              <p>
+                Цена:
+                <span class="modal__cost-item">${item.costItem} ₽</span>
+              </p>
+              <button class="btn">Купить</button>
+            </div>
+          </div>
+          <button class="modal__close">&#10008;</button>
+        </div>   
+      `);
+    }
+  });
+};
+
 const renderCard = () => {
     catalog.textContent = '';
     dataBase.forEach((item, i) => {
@@ -64,7 +106,6 @@ const renderCard = () => {
 modalFileInput.addEventListener('change', (event) => {
     const target = event.target;
     const reader = new FileReader();
-    // console.log(target.files);
     const file = target.files[0];
 
     infoPhoto.filename = file.name;
@@ -77,7 +118,6 @@ modalFileInput.addEventListener('change', (event) => {
             modalFileBtn.textContent = infoPhoto.filename;
             infoPhoto.base64 = btoa(event.target.result);
             modalImageAdd.src = `data:image/jpeg;base64,${infoPhoto.base64}`;
-            // console.log(infoPhoto);
         } else {
             modalFileBtn.textContent = 'Размер файла не должен превыщать 200кб';
             modalFileInput.value = '';
@@ -110,6 +150,7 @@ addAd.addEventListener('click', () => {
 catalog.addEventListener('click', (e) => {
   const target = e.target;
   if (target.closest('.card')) {
+    renderModalItem(target.closest('.card').dataset.id);
     modalItem.classList.remove('hide');
     document.addEventListener('keydown', closeModal);
   }
